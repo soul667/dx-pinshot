@@ -823,3 +823,62 @@ def test_drag_move_pin_and_right_click_delete_single_pin(tmp_path: Path) -> None
     assert popup.session.threads[0].labels == ["1"]
     assert popup.toast_lbl.text() == "已删除该标点"
     popup.close()
+
+
+def test_favorites_collect_export_md_pdf_and_batch_paste(tmp_path: Path, monkeypatch) -> None:
+    from dx_pinshot import favorites as fav_mod
+
+    app = _ensure_qapp()
+    shot = QtGui.QPixmap(640, 360)
+    shot.fill(QtGui.QColor("#FAF9F5"))
+
+    popup = PinShotPopup(cropped_pixmap=shot, state_dir=tmp_path, copy_clipboard=False)
+    popup.show()
+    app.processEvents()
+
+    img_rect = popup.canvas.image_rect()
+    QtTest.QTest.mouseClick(popup.canvas, QtCore.Qt.LeftButton, QtCore.Qt.NoModifier, img_rect.topLeft() + QtCore.QPoint(90, 90))
+    app.processEvents()
+    popup.bubble.editor.setPlainText("收藏第一条标注")
+    QtTest.QTest.keyClick(popup.bubble.editor, QtCore.Qt.Key_Return)
+    app.processEvents()
+
+    popup.fav_btn.click()
+    app.processEvents()
+    assert popup.toast_lbl.text() == "已收藏 (共 1 条)"
+
+    # Add a second favorite entry
+    QtTest.QTest.mouseClick(popup.canvas, QtCore.Qt.LeftButton, QtCore.Qt.NoModifier, img_rect.topLeft() + QtCore.QPoint(220, 140))
+    app.processEvents()
+    popup.bubble.editor.setPlainText("收藏第二条标注")
+    QtTest.QTest.keyClick(popup.bubble.editor, QtCore.Qt.Key_Return)
+    app.processEvents()
+    popup.fav_btn.click()
+    app.processEvents()
+
+    items = fav_mod.load_favorites(tmp_path)
+    assert len(items) == 2
+
+    md_path = fav_mod.export_favorites_markdown(state_dir=tmp_path, copy_clipboard=False)
+    assert md_path.exists()
+    md_text = md_path.read_text(encoding="utf-8")
+    assert "收藏第一条标注" in md_text and "收藏第二条标注" in md_text
+
+    pdf_path = fav_mod.export_favorites_pdf(state_dir=tmp_path)
+    assert pdf_path.exists()
+    assert pdf_path.read_bytes().startswith(b"%PDF-")
+
+    events: list[str] = []
+    monkeypatch.setattr(fav_mod.shutil, "which", lambda name: "/usr/bin/xdotool" if name == "xdotool" else None)
+    monkeypatch.setattr(fav_mod.time, "sleep", lambda _s: None)
+    monkeypatch.setattr(fav_mod, "_copy_single_clipboard", lambda _i, _t, mode: events.append(mode) or mode)
+    monkeypatch.setattr(fav_mod.subprocess, "run", lambda cmd, **kw: None)
+
+    res = fav_mod.paste_favorites_bundle(state_dir=tmp_path)
+    assert res["ok"] is True
+    assert res["pasted_images"] == 2
+    assert events == ["image", "image", "prompt"]
+
+    assert fav_mod.clear_favorites(tmp_path) == 2
+    assert fav_mod.load_favorites(tmp_path) == []
+    popup.close()

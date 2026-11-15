@@ -198,6 +198,38 @@ def _cmd_paste_both(args: argparse.Namespace) -> int:
     return 0 if res.get("ok") else 1
 
 
+def _cmd_favorites(args: argparse.Namespace) -> int:
+    from .favorites import (
+        clear_favorites,
+        export_favorites_markdown,
+        export_favorites_pdf,
+        load_favorites,
+        paste_favorites_bundle,
+    )
+
+    action = args.fav_action or "list"
+    if action == "list":
+        print(json.dumps(load_favorites(), indent=2, ensure_ascii=False))
+        return 0
+    if action == "export-pdf":
+        out = export_favorites_pdf(out_path=Path(args.out) if args.out else None)
+        print(str(out))
+        return 0
+    if action == "export-md":
+        out = export_favorites_markdown(out_path=Path(args.out) if args.out else None)
+        print(str(out))
+        return 0
+    if action == "paste":
+        res = paste_favorites_bundle()
+        print(json.dumps(res, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
+    if action == "clear":
+        removed = clear_favorites()
+        print(json.dumps({"cleared": removed}, ensure_ascii=False))
+        return 0
+    return 1
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="dx-pinshot",
@@ -251,6 +283,19 @@ def build_parser() -> argparse.ArgumentParser:
     p_paste = sub.add_parser("paste-both", help="Paste latest SoM image + Markdown instructions into focused window.")
     p_paste.add_argument("--delay", type=float, default=0.38)
     p_paste.set_defaults(func=_cmd_paste_both)
+
+    p_fav = sub.add_parser("favorites", help="Manage favorited captures, batch paste, or export PDF/Markdown.")
+    fav_sub = p_fav.add_subparsers(dest="fav_action")
+    fav_sub.add_parser("list", help="List favorited captures as JSON.").set_defaults(func=_cmd_favorites)
+    p_fav_pdf = fav_sub.add_parser("export-pdf", help="Export all favorites as a multi-page PDF.")
+    p_fav_pdf.add_argument("--out", default=None)
+    p_fav_pdf.set_defaults(func=_cmd_favorites)
+    p_fav_md = fav_sub.add_parser("export-md", help="Export all favorites as a Markdown bundle.")
+    p_fav_md.add_argument("--out", default=None)
+    p_fav_md.set_defaults(func=_cmd_favorites)
+    fav_sub.add_parser("paste", help="Sequentially paste all favorited images + combined Markdown.").set_defaults(func=_cmd_favorites)
+    fav_sub.add_parser("clear", help="Clear all favorited captures.").set_defaults(func=_cmd_favorites)
+    p_fav.set_defaults(func=_cmd_favorites)
 
     p_holder = sub.add_parser("_clip_holder", help=argparse.SUPPRESS)
     p_holder.add_argument("--image", default=None)

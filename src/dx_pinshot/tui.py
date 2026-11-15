@@ -38,6 +38,13 @@ from .config import (
     normalize_config,
     save_config,
 )
+from .favorites import (
+    clear_favorites,
+    export_favorites_markdown,
+    export_favorites_pdf,
+    load_favorites,
+    remove_favorite,
+)
 from .hotkey import get_hotkey_status, install_hotkey, uninstall_hotkey
 
 DX_PAPER_THEME = Theme(
@@ -344,6 +351,15 @@ class PinShotTUI(App[None]):
                         yield Static("Prompt Preview", id="preview-header")
                         yield Static("Select a capture row to inspect its Markdown instruction.", id="prompt-preview")
 
+            with TabPane("Favorites", id="favorites"):
+                with Horizontal(id="fav-actions"):
+                    yield Button("Export PDF", id="btn-fav-pdf", classes="top-btn", variant="primary")
+                    yield Button("Export Markdown", id="btn-fav-md", classes="top-btn")
+                    yield Button("Remove Selected", id="btn-fav-remove", classes="top-btn")
+                    yield Button("Clear Favorites", id="btn-fav-clear", classes="top-btn")
+                yield DataTable(id="favorites-table")
+                yield Static("", id="fav-feedback")
+
             with TabPane("Settings", id="settings"):
                 with VerticalScroll(id="settings-form"):
                     with Horizontal(classes="setting-row"):
@@ -454,7 +470,12 @@ class PinShotTUI(App[None]):
         table.cursor_type = "row"
         table.add_columns("Timestamp", "Pins", "First Annotation")
 
+        fav_table = self.query_one("#favorites-table", DataTable)
+        fav_table.cursor_type = "row"
+        fav_table.add_columns("ID", "Time", "Size", "Summary")
+
         self._refresh_captures()
+        self._refresh_favorites()
         self._refresh_hotkey_status()
 
     def _backup_path(self) -> Path:
@@ -528,7 +549,23 @@ class PinShotTUI(App[None]):
     def action_refresh_all(self) -> None:
         self._config = load_config(self._config_dir)
         self._refresh_captures()
+        self._refresh_favorites()
         self._refresh_hotkey_status()
+
+    def _refresh_favorites(self) -> None:
+        fav_table = self.query_one("#favorites-table", DataTable)
+        fav_table.clear()
+        items = load_favorites(self._state_dir)
+        for item in items:
+            dims = f"{item.get('width', '?')}×{item.get('height', '?')}"
+            fav_table.add_row(
+                str(item.get("id", "")),
+                str(item.get("created_at", "")),
+                dims,
+                str(item.get("summary", "")),
+                key=str(item.get("id", "")),
+            )
+        self.query_one("#fav-feedback", Static).update(f"Favorites: {len(items)} item(s)")
 
     def _collect_settings_from_widgets(self) -> dict[str, Any]:
         theme_val = self.query_one("#cfg-theme", Select).value
@@ -637,6 +674,31 @@ class PinShotTUI(App[None]):
             return
         self.copy_to_clipboard(text)
         self.query_one("#preview-header", Static).update("Copied Markdown prompt to clipboard.")
+
+    @on(Button.Pressed, "#btn-fav-pdf")
+    def _on_fav_pdf_pressed(self) -> None:
+        pdf_path = export_favorites_pdf(state_dir=self._state_dir)
+        self.query_one("#fav-feedback", Static).update(f"Exported PDF -> {pdf_path}")
+
+    @on(Button.Pressed, "#btn-fav-md")
+    def _on_fav_md_pressed(self) -> None:
+        md_path = export_favorites_markdown(state_dir=self._state_dir, copy_clipboard=True)
+        self.query_one("#fav-feedback", Static).update(f"Exported & copied Markdown -> {md_path}")
+
+    @on(Button.Pressed, "#btn-fav-remove")
+    def _on_fav_remove_pressed(self) -> None:
+        fav_table = self.query_one("#favorites-table", DataTable)
+        if fav_table.row_count <= 0:
+            return
+        row_key, _ = fav_table.coordinate_to_cell_key(fav_table.cursor_coordinate)
+        if row_key.value and remove_favorite(str(row_key.value), state_dir=self._state_dir):
+            self._refresh_favorites()
+
+    @on(Button.Pressed, "#btn-fav-clear")
+    def _on_fav_clear_pressed(self) -> None:
+        count = clear_favorites(state_dir=self._state_dir)
+        self._refresh_favorites()
+        self.query_one("#fav-feedback", Static).update(f"Cleared {count} favorite(s).")
 
 
 def run_tui(

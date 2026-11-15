@@ -8,6 +8,7 @@ from typing import Any
 from PyQt5 import QtCore, QtGui, QtWidgets
 
 from .clipboard import ExportResult, export_html_preview, export_session
+from .favorites import add_favorite, load_favorites
 from .config import load_config, modifier_display_label, normalize_config, resolve_theme_name
 from .model import AnnotationSession, PinThread, paint_som_pins, render_som_image
 from .tokens import (
@@ -647,10 +648,11 @@ class PinShotPopup(QtWidgets.QWidget):
         self.clear_btn = self._make_action_btn("清空", self.clear_all, "清空所有标注")
         self.copy_img_btn = self._make_action_btn("复制图片", lambda: self._export("image", close_after=False), "仅复制 Set-of-Mark 图片到剪贴板")
         self.copy_md_btn = self._make_action_btn("复制指令", lambda: self._export("markdown", close_after=False), "仅复制 Markdown Prompt")
+        self.fav_btn = self._make_action_btn("收藏", self.add_to_favorites, "加入收藏夹以便批量粘贴或打包 PDF/Markdown")
         self.open_web_btn = self._make_action_btn("网页打开", self.open_in_browser, "在外部浏览器中打开交互预览页 (Ctrl+O)")
         self.fullscreen_btn = self._make_action_btn("全屏", self.toggle_fullscreen, "切换全屏/还原视图 (F11)")
         self._dots: list[QtWidgets.QLabel] = []
-        for idx, btn in enumerate((self.undo_btn, self.clear_btn, self.copy_img_btn, self.copy_md_btn, self.open_web_btn, self.fullscreen_btn)):
+        for idx, btn in enumerate((self.undo_btn, self.clear_btn, self.copy_img_btn, self.copy_md_btn, self.fav_btn, self.open_web_btn, self.fullscreen_btn)):
             dot = QtWidgets.QLabel("·", self.header)
             dot.setFont(mono_font(8.8))
             h_layout.addWidget(dot)
@@ -903,7 +905,7 @@ class PinShotPopup(QtWidgets.QWidget):
             }}
             QPushButton:hover {{ color: {theme.text_primary}; }}
         """
-        for btn in (self.undo_btn, self.copy_img_btn, self.copy_md_btn, self.open_web_btn, self.fullscreen_btn):
+        for btn in (self.undo_btn, self.copy_img_btn, self.copy_md_btn, self.fav_btn, self.open_web_btn, self.fullscreen_btn):
             btn.setStyleSheet(action_qss)
         self.clear_btn.setStyleSheet(
             f"""
@@ -1147,6 +1149,17 @@ class PinShotPopup(QtWidgets.QWidget):
         if self.session.active_thread is not None:
             self._position_bubble(focus_editor=False)
         self.raise_()
+
+    def add_to_favorites(self) -> dict | None:
+        raw = self._cropped_raw_qimage()
+        if raw.isNull():
+            return None
+        som = self.build_som_image()
+        md = self.session.format_vlm_prompt()
+        entry = add_favorite(som, md, state_dir=self.state_dir)
+        total = len(load_favorites(self.state_dir))
+        self._show_toast(f"已收藏 (共 {total} 条)")
+        return entry
 
     def open_in_browser(self) -> Path | None:
         raw = self._cropped_raw_qimage()
