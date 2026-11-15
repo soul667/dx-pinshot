@@ -536,8 +536,8 @@ class PinShotPopup(QtWidgets.QWidget):
     MAX_CANVAS_W = 920
     MAX_CANVAS_H = 620
     CANVAS_PAD = 16
-    MIN_WIN_W = 560
-    HEADER_H = 34
+    MIN_WIN_W = 820
+    HEADER_H = 38
     FOOTER_H = 26
 
     def __init__(

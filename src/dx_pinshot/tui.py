@@ -235,6 +235,27 @@ class PinShotTUI(App[None]):
         margin-right: 1;
     }
 
+    #fav-actions {
+        height: auto;
+        padding: 1 2;
+        background: $panel;
+        border: solid $primary 30%;
+        margin: 0 0 1 0;
+        align: left middle;
+    }
+
+    #favorites-table {
+        height: 1fr;
+        border: solid $primary 25%;
+        background: $surface;
+    }
+
+    #fav-feedback {
+        margin-top: 1;
+        color: $success;
+        text-style: bold;
+    }
+
     #preview-pane {
         width: 48%;
         height: 1fr;
