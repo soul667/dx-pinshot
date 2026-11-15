@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dx-pinshot"
+version = "0.1.0"
+description = "DX PinShot — minimalist Set-of-Mark screenshot & grouped pin annotation tool for VLMs."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+dx-pinshot = "dx_pinshot.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

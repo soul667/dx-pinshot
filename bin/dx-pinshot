@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd -P)"
+export PYTHONPATH="${ROOT}/src${PYTHONPATH:+:${PYTHONPATH}}"
+
+VENV_PY="${HOME}/.local/share/dx-voice/venv/bin/python"
+if [[ -x "${VENV_PY}" ]]; then
+  exec "${VENV_PY}" -m dx_pinshot "$@"
+fi
+exec /usr/bin/python3 -m dx_pinshot "$@"

@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DX · PinShot — Minimalist Set-of-Mark Screenshot Annotator</title>
+  <style>
+    :root {
+      --bg: #FAF9F5; --panel: #FFFFFF; --subtle: #F3F1EA; --ink: #191817;
+      --muted: #6F6B64; --line: #E6E2D8; --line-strong: #9E988E; --accent: #B89B67;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; background: var(--bg); color: var(--ink);
+      font-family: "Newsreader", "Noto Serif CJK SC", Georgia, serif; line-height: 1.6;
+    }
+    .wrap { max-width: 980px; margin: 0 auto; padding: 40px 24px 72px; }
+    header {
+      display: flex; align-items: baseline; justify-content: space-between; gap: 16px;
+      border-bottom: 1px solid var(--line); padding-bottom: 18px; margin-bottom: 32px; flex-wrap: wrap;
+    }
+    .brand { font-size: 24px; font-weight: 700; letter-spacing: 0.3px; }
+    .mono { font-family: "JetBrains Mono", ui-monospace, Menlo, monospace; }
+    .badge {
+      font-size: 12px; padding: 3px 8px; border: 1px solid var(--line-strong);
+      background: var(--subtle); color: var(--ink);
+    }
+    .hero h1 { font-size: 36px; line-height: 1.25; margin: 0 0 12px; font-weight: 700; }
+    .hero p { font-size: 17px; color: var(--muted); max-width: 720px; margin: 0 0 22px; }
+    .cta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 36px; }
+    a.btn {
+      display: inline-block; padding: 8px 16px; border: 1px solid var(--ink);
+      text-decoration: none; font-size: 13px; color: var(--ink);
+    }
+    a.btn.primary { background: var(--ink); color: var(--bg); }
+    a.btn.primary:hover { background: var(--accent); border-color: var(--accent); color: #191817; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+    .card {
+      background: var(--panel); border: 1px solid var(--line); padding: 18px;
+    }
+    .card h3 { margin: 0 0 6px; font-size: 16px; }
+    .card p { margin: 0; font-size: 14px; color: var(--muted); }
+    .keys {
+      margin-top: 32px; background: var(--panel); border: 1px solid var(--line); padding: 18px;
+    }
+    .keys h2 { margin: 0 0 12px; font-size: 16px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    th, td { text-align: left; padding: 8px 10px; border-top: 1px solid var(--line); }
+    th { color: var(--muted); font-weight: 600; border-top: none; }
+    footer { margin-top: 40px; font-size: 12px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">DX · PinShot</div>
+      <div class="mono badge">v0.2.0 · Set-of-Mark Annotator</div>
+    </header>
+    <section class="hero">
+      <h1>极简 Set-of-Mark 截图标注工具</h1>
+      <p>
+        为 VLM 视觉指令与界面评审打造的浮动批注弹窗与网页工作台：点击即打点编号（1, 2, 3），Alt+Click 同组多选（1.1, 1.2…），支持拖拽微调、右键单删、半透明标记主题与一键双贴。
+      </p>
+      <div class="cta mono">
+        <a class="btn primary" href="https://github.com/soul667/dx-pinshot">GitHub Repository</a>
+        <a class="btn" href="https://github.com/soul667/dx-pinshot#install-as-dx-plugin">Install DX Plugin</a>
+      </div>
+    </section>
+    <section class="grid">
+      <div class="card">
+        <h3>单选与同组多选</h3>
+        <p>左键单击生成主编号 <code>1, 2, 3</code>；按住 <code>Alt</code> 或开启「多选」连续点击同一组添加 <code>1.1, 1.2, 1.3</code> 与虚线引导。</p>
+      </div>
+      <div class="card">
+        <h3>箭头、拖拽与单点删除</h3>
+        <p>半透明高对比标牌配实心指向箭头；左键拖动任意标点改位置，右键单独删除任一子标点并自动重排。</p>
+      </div>
+      <div class="card">
+        <h3>网页交互工作台</h3>
+        <p>按 <code>Ctrl+O</code> 在外部浏览器打开完整标注工作台，继承当前图片、标点、评论与主题，支持继续编辑与导出。</p>
+      </div>
+      <div class="card">
+        <h3>DX Clip 一键双贴</h3>
+        <p>与 <code>dx-clip</code> 深度联动，<code>Ctrl+Alt+1</code> 自动把 SoM 图片与 Markdown 指令连续粘贴到当前聊天框。</p>
+      </div>
+    </section>
+    <section class="keys">
+      <h2>快捷键速查</h2>
+      <table class="mono">
+        <thead><tr><th>快捷键</th><th>功能</th></tr></thead>
+        <tbody>
+          <tr><td>Ctrl + Alt + A</td><td>启动 DX PinShot 区域截图与标注</td></tr>
+          <tr><td>Ctrl + Alt + 1</td><td>一键双贴（先贴 SoM 图片再贴 Markdown 指令）</td></tr>
+          <tr><td>Ctrl + Shift + A</td><td>保留原 Flameshot 区域截图</td></tr>
+          <tr><td>F11 / Ctrl + O</td><td>全屏标注切换 / 外部网页工作台打开</td></tr>
+        </tbody>
+      </table>
+    </section>
+    <footer class="mono">DX Ecosystem · Paper (#FAF9F5) &amp; Obsidian (#121211)</footer>
+  </div>
+</body>
+</html>
